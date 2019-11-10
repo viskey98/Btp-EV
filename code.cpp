@@ -7,6 +7,14 @@ set< pair<int, int>, greater< pair<int, int > > > p;
 int demand[N];
 int candidate[N];
 int roc;
+// input format:
+// n (no of vertices)
+// edges (no of edges)
+// next "edges" no. of lines of the format u v w (edge between node u-v of weight w)
+// m (no of candidate nodes)
+// "m" space separated integers specifying the candidate nodes ( 1-indexed )
+// roc (the radius of coverage)
+// "n" space separated integers specifying the demand values (float) of nodes 1 to n respectively
 
 void init()
 {
