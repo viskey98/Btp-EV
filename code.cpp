@@ -3,10 +3,11 @@ using namespace std;
 const int N = 1005;
 vector < vector < pair< int, int> > > graph(N); // should be a simple graph
 vector < int > s;
-set< pair<int, int>, greater< pair<int, int > > > p;
-int demand[N];
+set< pair<double, int>, greater< pair<double, int > > > p;
+map <int, double> demand;
 int candidate[N];
 int roc;
+double average_demand;
 // input format:
 // n (no of vertices)
 // edges (no of edges)
@@ -14,7 +15,7 @@ int roc;
 // m (no of candidate nodes)
 // "m" space separated integers specifying the candidate nodes ( 1-indexed )
 // roc (the radius of coverage)
-// "n" space separated integers specifying the demand values (float) of nodes 1 to n respectively
+// "m" space separated integers specifying the demand values (float) of the candidate nodes (in the same order as the candidated nodes given)
 
 void init()
 {
@@ -45,17 +46,22 @@ void init()
         candidate[u] = 1;
     }
     cin>>roc;
-    for( i = 0; i < n; i++)
+    for( i = 0; i < m; i++)
     {
-        cin>>demand[i];
-        p.insert(make_pair(demand[i], i));
+        cin>>demand[s[i]];
+        average_demand += demand[s[i]];
+        p.insert(make_pair(demand[s[i]], s[i]));
     }
+    average_demand /= (double)n;
 }
-int F(int x, double d)
+int F(double d)
 {
     // implement some function 
-    return x;
-}
+    double new_roc = roc;
+    if( d > average_demand)
+        new_roc *= average_demand/d;
+    return (int)new_roc;
+}   
 void dfs(int i, int d, int max_dis, int* vis)
 {
     if( d > max_dis) return;
@@ -88,7 +94,7 @@ int main()
         int x = p.begin()->second;
         p.erase(p.begin());
         out.push_back(x);
-        remove_neighbourhood(x, F(roc, demand[x]));
+        remove_neighbourhood(x, F(demand[x]));
     }
     int i;
     sort(out.begin(), out.end());
