@@ -9,4 +9,4 @@ placement strategy (not necessarily optimal, NP-Hard) which can
 satisfy the charging demand of these candidate locations.
 
 ### Proposed solution - 
-Near optimal algo for setting up charging stations which satisfy the charging needs of a city while minimizing the "travel penalty" using a greedy strategy.
+Near optimal algo for setting up min no. of charging stations which satisfy the charging needs of a city while minimizing the "travel penalty" using a greedy strategy.
