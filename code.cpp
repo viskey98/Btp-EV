@@ -1,13 +1,19 @@
 #include<bits/stdc++.h>
+#include<math.h>
 using namespace std;
-const int N = 1005;
+const int N = 1005; // Maximum no. of nodes the road network can have
 vector < vector < pair< int, int> > > graph(N); // should be a simple graph
 vector < int > s;
 set< pair<double, int>, greater< pair<double, int > > > p;
 map <int, double> demand;
+const int INF = 100000;
+int n; 
 int candidate[N];
+int penalty_dis[N];
 int roc;
 double average_demand;
+double alpha;
+double lamda;
 // input format:
 // n (no of vertices)
 // edges (no of edges)
@@ -16,13 +22,15 @@ double average_demand;
 // "m" space separated integers specifying the candidate nodes ( 1-indexed )
 // roc (the radius of coverage)
 // "m" space separated integers specifying the demand values (float) of the candidate nodes (in the same order as the candidated nodes given)
+// alpha (the travel penalty coeff)
+// lamda (penalty factor)
 
 void init()
 {
-    int n;
-    // no. of vertices
     cin>>n;
     int i;
+    for(i = 0; i < n+5; i++) 
+        penalty_dis[i] = INF;
     int edges;
     // no. of edges
     cin>>edges;
@@ -53,6 +61,8 @@ void init()
         p.insert(make_pair(demand[s[i]], s[i]));
     }
     average_demand /= (double)n;
+    cin>>alpha;
+    cin>>lamda;
 }
 int F(double d)
 {
@@ -68,6 +78,7 @@ void dfs(int i, int d, int max_dis, int* vis)
     vis[i] = 1;
     if(candidate[i])
     {
+        penalty_dis[i] = fmin(penalty_dis[i], d);
         if(p.find(make_pair(demand[i], i)) != p.end())
             p.erase(make_pair(demand[i], i));
     }
@@ -85,6 +96,17 @@ void remove_neighbourhood(int x, int d)
     dfs(x, 0, d, vis);
     return;
 }
+double calculate_total_travel_penalty()
+{
+    double ans = 0;
+    int i;
+    for( i = 0; i < n; i++)
+    {
+        if(candidate[i])
+            ans += alpha*demand[i]*penalty_dis[i];
+    }
+    return ans;
+}
 int main()
 {
     vector< int > out;
@@ -94,14 +116,17 @@ int main()
         int x = p.begin()->second;
         p.erase(p.begin());
         out.push_back(x);
+        penalty_dis[x] = 0;
         remove_neighbourhood(x, F(demand[x]));
     }
     int i;
+    double total_travel_penalty = calculate_total_travel_penalty();
+    int no_of_charging_points = out.size();
     sort(out.begin(), out.end());
     cout<<"The charging point locations are: \n";
     for(i = 0; i < out.size(); i++)
-    {
         cout<<out[i]+1<<" ";
-    }
-    
+    printf("\nIncurring costs:\nTravel penalty: %f\nNo. of charging points: %d\n", total_travel_penalty, no_of_charging_points);
+    double cost = lamda*total_travel_penalty + (1 - lamda)*no_of_charging_points;
+    cout<<"Total reduced cost: "<<cost<<" units\n";
 }
