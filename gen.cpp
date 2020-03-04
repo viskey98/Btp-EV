@@ -105,14 +105,16 @@ int main()
         cout<<roc<<endl;
         FOR0(i, no_of_candidates)
         {
-            int demand = 8 + rand()%13;
+            int demand = 2 + rand()%5;
             cout<<demand<<" ";
         }
         cout<<endl;
-        double alpha = 10/(double) (20 + rand()%(81));
+        double alpha = 0.2;
         cout<<alpha<<endl;
-        double lamda = 1/(double) (20 + rand()%(81));
+        double lamda = 0.025;
         cout<<lamda<<endl;
+        int cap = 2 + rand()%7;
+        cout<<cap<<endl;
     }
     cerr <<endl<< "Time elapsed : " << clock() * 1000.0 / CLOCKS_PER_SEC << " ms" << '\n';
 }
