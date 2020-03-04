@@ -3,16 +3,14 @@ using namespace std;
 const int N = 1005; // Maximum no. of nodes the road network can have
 vector < vector < pair< int, int> > > graph(N); // should be a simple graph
 vector < int > s;
-set< pair<double, int>, greater< pair<double, int > > > p;
-map <int, double> demand;
+int demand[N] = {};
 const int INF = 100000;
 int n, m;
-int candidate[N];
-int penalty_dis[N];
+int candidate[N] = {};
 int roc;
-double average_demand;
 double alpha;
 double lamda;
+double c, capacity[N];
 // input format:
 // n (no of vertices)
 // edges (no of edges)
@@ -23,15 +21,22 @@ double lamda;
 // "m" space separated integers specifying the demand values (float) of the candidate nodes (in the same order as the candidated nodes given)
 // alpha (the travel penalty coeff)
 // lamda (penalty factor)
+// c (capacity)
 
 void init()
 {
     cin>>n;
     int i;
-    for(i = 0; i < n+5; i++) 
-        penalty_dis[i] = INF;
     int edges;
     // no. of edges
+    s.clear();
+    for ( i =0 ; i <n; i++)
+    {
+        candidate[i] = 0;
+        graph[i].clear();
+        demand[i] = 0;
+        capacity[i] = 0;
+    }
     cin>>edges;
     for( i = 0; i < edges; i++)
     {
@@ -53,107 +58,163 @@ void init()
     cin>>roc;
     for( i = 0; i < m; i++)
     {
-        cin>>demand[s[i]];
-        average_demand += demand[s[i]];
-        p.insert(make_pair(demand[s[i]], s[i]));
+        double temp;
+        cin>>temp;
+        demand[s[i]] = temp;
     }
-    average_demand /= (double)n;
     cin>>alpha;
     cin>>lamda;
+    cin>>c;
+    for( i = 0; i < m; i++)
+        capacity[s[i]] = c;
 }
-int F(double d)
+int subset[N] = {};
+vector< vector< pair<int, int > >  > neighbours(N);
+int gap[N] = {}, demand_left[N] = {};
+void dfs(int i, int d, int head, int *vis)
 {
-    // implement some function 
-    double new_roc = roc;
-    if( d > average_demand)
-        new_roc *= average_demand/d;
-    return (int)new_roc;
-}
-vector < int > cur;
-double best_cost = INF;
-double best_travel_penalty;
-vector < int > out;
-void dfs(int i, int d, int max_dis, int* vis)
-{
-    if( d > max_dis) return;
     vis[i] = 1;
-
-    if(candidate[i])
-        penalty_dis[i] = fmin(penalty_dis[i], d);
-
+    if( d > roc) return;
+    if( i != head && d <= roc && subset[i])
+        neighbours[head].push_back(make_pair(i, d));
     int j, si = graph[i].size();
-    for( j = 0; j < si; j++ )
+    for( j = 0; j < si; j++)
     {
         pair< int, int > v = graph[i][j];
         if(vis[v.first]) continue;
-        dfs(v.first, d+v.second, max_dis, vis);
+        dfs(v.first, d+v.second, head, vis);
     }
 }
-bool check_all_reachable()
+double cur_num = 0, cur_penalty = 0, travel_penalty = 0, best_cost = INF;
+vector< vector< int > > distribute[10][10];
+vector<int> cur, out;
+void precompute(int i, int left, int tot, int n)
 {
-    int i, vis[n+5] = {};
-    for( i = 0; i < n; i++) penalty_dis[i] = INF;
-    int si = cur.size();
-    for( i = 0; i < si; i++)
+    if(i == n)
     {
-        int j;
-        for( j = 0; j < n; j++) vis[j] = 0;
-        penalty_dis[cur[i]] = 0;
-        dfs(cur[i], 0, F(demand[cur[i]]), vis);
+        if(left == 0)
+            distribute[tot][n].push_back(cur);
+        return;
     }
-    for( i = 0; i < n; i++)
+    int j;
+    for(j = 0; j <= left; j++)
     {
-        if(candidate[i] && penalty_dis[i] == INF) return false;
+        cur.push_back(j);
+        precompute(i+1, left-j, tot, n);
+        cur.pop_back();
     }
-        
-    return true;
 }
-void generate(int i)
+void make_distributions()
 {
-    if( i == n)
+    int i, j;
+    for( i = 1; i <= 10; i++)
+        for( j = 1; j <= min(i, 5); j++)
+            precompute(0, i, i, j);
+
+}
+void satisfy(int i)
+{
+    if(i == n)
     {
-        if(check_all_reachable())
+        double cur_cost = lamda*cur_penalty + (1-lamda)*cur_num;
+        if( cur_cost < best_cost)
         {
-            double tp = 0;
-            double totp = 0;
-            int no = cur.size();
+            best_cost = cur_cost;
+            travel_penalty = cur_penalty;
             int j;
-            for(j = 0; j < n; j++)
-            {
-                if(candidate[j])
-                    tp += alpha*demand[j]*penalty_dis[j];
-            }
-            totp = lamda*tp + (1-lamda)*no;
-            if(totp < best_cost)
-            {
-                out.clear();
-                best_travel_penalty = tp;
-                for( j = 0; j < no; j++)
-                {
-                    out.push_back(cur[j]);
-                }
-                best_cost = totp;
-            }
+            out.clear();
+            for( j = 0; j < n; j++)
+                if(candidate[j] && subset[j]) out.push_back(j);
         }
         return;
     }
-    if(candidate[i])
+    if(!candidate[i] || subset[i])
     {
-        cur.push_back(i);
-        generate(i+1);
-        cur.pop_back();
+        satisfy(i+1);
+        return;
     }
+    int tot = demand_left[i];
+    int num = neighbours[i].size();
+    if( num == 0) return;
+    int j, si = distribute[tot][num].size();
+    for(j = 0; j < si ; j++)
+    {
+        int k;
+        bool is = true;
+        for(k = 0; k < num ; k++)
+        {
+            int u = neighbours[i][k].first;
+            if(gap[u] < distribute[tot][num][j][k])
+                is = false;
+            cur_penalty += alpha*distribute[tot][num][j][k];
+            gap[u] -= distribute[tot][num][j][k];
+        }
+        if(is)
+            satisfy(i+1);
+        for(k = 0; k < num ; k++)
+        {
+            int u = neighbours[i][k].first;
+            cur_penalty -= alpha*distribute[tot][num][j][k];
+            gap[u] += distribute[tot][num][j][k];
+        }
+    }
+}
+void generate(int i)
+{
+    if(i == n)
+    {
+        int j;
+        for(j = 0; j < n; j++)
+        {
+            gap[j] = 0;
+            demand_left[j] = 0;
+            neighbours[j].clear();
+        }
+        for( j = 0; j < n; j++)
+        {
+            if(!candidate[j]) continue;
+            if(subset[j]) 
+            {
+                gap[j] = capacity[j] - demand[j];
+                continue;
+            }
+            int vis[N] = {};
+            dfs(j, 0, j, vis);
+            demand_left[j] = demand[j];
+        }
+        satisfy(0);
+        return;
+    }
+    if(!candidate[i])
+    {
+        generate(i+1);
+        return;
+    }
+    subset[i] = 1;
+    cur_num++;
+    generate(i+1);
+    subset[i] = 0;
+    cur_num--;
     generate(i+1);
 }
 int main()
 {
-    init();
-    generate(0);
-    sort(out.begin(), out.end());
-    cout<<"The charging point locations are: \n";
-    int i;
-    for(i = 0; i < out.size(); i++)
-        cout<<out[i]+1<<" ";
-    printf("\nIncurring costs:\nTravel penalty: %f\nNo. of charging points: %d\n", best_travel_penalty, out.size());
-    cout<<"Total reduced cost: "<<best_cost<<" units\n";
+    int t;
+    cin>>t;
+    make_distributions();
+    while(t--)
+    {
+        cur_num = 0, cur_penalty = 0, travel_penalty = 0, best_cost = INF;
+        cur.clear();out.clear();
+        init();
+        generate(0);
+        sort(out.begin(), out.end());
+        cout<<"The charging point locations are: \n";
+        int i;
+        for(i = 0; i < out.size(); i++)
+            cout<<out[i]+1<<" ";
+        printf("\nIncurring costs:\nTravel penalty: %f\nNo. of charging points: %d\n", travel_penalty, out.size());
+        cout<<"Total reduced cost: "<<best_cost<<" units\n";
+    }
+    
 }
