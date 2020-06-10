@@ -1,3 +1,4 @@
+// make generator better
 #include<bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -56,39 +57,68 @@ void unionSet(int i, int j)
     }
 }
 int sizeOfSet(int i){return ssi[findSet(i)];}
+int candidate[1005] = {}, grid[1005];
+int vis[1005] = {};
+vector < vector < pair< int, int> > > graph(1005);
+int lim;
+void color_it(int i, int c, int d)
+{
+    vis[i] = 1;
+    if( d > lim) return;
+    if(candidate[i] && !grid[i])
+        grid[i] = c;
+    int j, si = graph[i].size();
+    FOR0(j, si)
+    {
+        int u = graph[i][j].ff, w = graph[i][j].ss;
+        if(vis[u]) continue;
+        color_it(u, c, d+w);
+    }
+}
 int main()
 {
     srand(time(NULL));
-    int t = 100; // no of test cases required
+    int t = 1; // no of test cases required
     cout<<t<<endl;
+    const int N = 8;
     while(t--)
     {
-        int n = 15 + rand()%6;
+        int n = N + rand()%N;
         cout<<n<<endl;
-        int m = n-1, M = 50;
-        int no_edges = m + rand()%(M-m+1);
+        int m = n-1;
+        int no_edges = 2.2*n;
         cout<<no_edges<<endl;
         initialize(n+1);
         int i = 0;
+        set< ii > edge;
         while(i < m)
         {
             int u = 1 + rand()%n, v = 1 + rand()%n;
             if(isSameSet(u, v)) continue;
-            int w = 10 + rand()%21;
+            int w = 5 + rand()%21;
             unionSet(u, v);
             cout<<u<<" "<<v<<" "<<w<<endl;
+            u--;v--;
+            graph[u].pb(mp(v, w));
+            graph[v].pb(mp(u, w));
+            if( u > v) swap(u, v);
+            edge.insert(mp(u, v));
             i++;
         }
         while(i < no_edges)
         {
             int u = 1 + rand()%n, v = 1 + rand()%n;
             if(u == v) continue;
-            int w = 10 + rand()%21;
-            cout<<u<<" "<<v<<" "<<w<<endl;
+            if(u > v) swap(u, v);
+            u--;v--;
+            if( edge.find(mp(u, v)) != edge.end()) continue;
+            int w = 5 + rand()%21;
+            cout<<u+1<<" "<<v+1<<" "<<w<<endl;
+            edge.insert(mp(u, v));
             i++;
         }
-        m = 0.4*n, M = 0.6*n;
-        int no_of_candidates = m + rand()%(M-n+1);
+        m = 0.4*n;
+        int no_of_candidates = m;
         cout<<no_of_candidates<<endl;
         vi nodes;
         FOR0(i, n) nodes.pb(i+1);
@@ -99,9 +129,13 @@ int main()
             nodes.pop_back();
             i--;
         }
-        FOR0(i, no_of_candidates)   cout<<nodes[i]<<" ";
+        FOR0(i, no_of_candidates)  
+        {
+            candidate[nodes[i]-1] = 1;
+            cout<<nodes[i]<<" ";
+        }
         cout<<endl;
-        int roc = 20 + rand()%31;
+        int roc = 15 + rand()%31;
         cout<<roc<<endl;
         FOR0(i, no_of_candidates)
         {
@@ -109,12 +143,28 @@ int main()
             cout<<demand<<" ";
         }
         cout<<endl;
-        double alpha = 0.2;
+        // limit for making grids
+        lim = 30;
+        int ctr = 1;
+        FOR0(i, n)
+        {
+            if(!candidate[i])  continue;
+            memset(vis, 0, sizeof vis);
+            color_it(i, ctr++, 0);
+        }
+        FOR0(i, no_of_candidates)
+            cout<<grid[nodes[i]-1]<<" ";
+        cout<<endl;
+        double alpha = 0.5;
         cout<<alpha<<endl;
-        double lamda = 0.025;
-        cout<<lamda<<endl;
-        int cap = 2 + rand()%7;
+        double beta = 5;
+        cout<<beta<<endl;
+        double l1 = 0.025, l2 = 0.8;
+        cout<<l1<<" "<<l2<<endl;
+        int cap = 10;
         cout<<cap<<endl;
+        double randomness = 0;
+        cout<<randomness<<endl;
     }
     cerr <<endl<< "Time elapsed : " << clock() * 1000.0 / CLOCKS_PER_SEC << " ms" << '\n';
 }
