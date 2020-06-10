@@ -1,12 +1,12 @@
-## Placing EV (electric vehicle) charging points in smart cities of future India.  
+## Finding an efficient strategy to solve the charging point placement problem .
 
 #### Under professor *Dr. Samrat Mondal*
 
 ### Problem statement - 
-Given a city map, including its specifications (like heat map,
-population density, candidate locations etc), find a charging point
-placement strategy (not necessarily optimal, NP-Hard) which can
-satisfy the charging demand of these candidate locations.
+Given a city map, including its specifications like charging demand, candidate locations and grid network, find a charging point placement strategy (not necessarily optimal, NP-Hard) which can satisfy the charging demand of these candidate locations.
+
 
 ### Proposed solution - 
-Near optimal algo for setting up min no. of charging stations which satisfy the charging needs of a city while minimizing the "travel penalty" using a greedy strategy.
+Near optimal greedy algo for placing charging points to optimize a multi-objective involving costs like: Charging point installation cost, travel penalty and grid penalty.
+
+#### B.Tech project thesis can be found [here](https://github.com/viskey98/Btp-EV/blob/master/Thesis.pdf).
